@@ -46,6 +46,32 @@ The code is clean, well-commented, and follows best practices for maintainabilit
 - **Client-focused**: I've structured the code for easy updates and customization, making it simple for non-developers to maintain
 - **Modern best practices**: Responsive design, accessibility considerations, and clean code architecture
 
+## Pricing & Timeline
+
+### Project-Based Pricing
+- **Base Solution** (as demonstrated): **$800 - $1,200**
+  - Includes: Standalone HTML map, documentation, basic customization
+  - Timeline: 3-5 business days
+  
+- **Custom Implementation**: **$1,200 - $2,500**
+  - Includes: Custom SVG paths, data integration, advanced features, platform-specific optimizations
+  - Timeline: 7-10 business days
+  
+- **Enterprise Solution**: **$2,500+**
+  - Includes: Multiple maps, advanced interactions, API integration, custom design, ongoing support
+  - Timeline: 2-3 weeks
+
+### Hourly Rate
+- **$75 - $100/hour** for ongoing work, modifications, or support
+
+### Timeline Estimates
+- **Simple map (5-10 regions)**: 3-5 business days
+- **Medium map (10-50 regions)**: 7-10 business days  
+- **Complex map (50+ regions, custom features)**: 2-3 weeks
+- **Rush delivery**: Available with 25% premium
+
+*Note: Timeline assumes SVG paths are provided. If SVG creation is needed, add 2-3 days.*
+
 ## Timeline & Availability
 
 The solution is **complete and ready for immediate deployment**. I can:

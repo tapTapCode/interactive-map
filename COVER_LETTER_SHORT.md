@@ -24,6 +24,17 @@ A **standalone interactive map solution** (pure HTML/CSS/JS, no dependencies) th
 
 **View the solution**: https://github.com/tapTapCode/interactive-map
 
+## Pricing & Timeline
+
+**Project-Based:**
+- Base solution: $800-$1,200 (3-5 days)
+- Custom implementation: $1,200-$2,500 (7-10 days)
+- Enterprise: $2,500+ (2-3 weeks)
+
+**Hourly Rate:** $75-$100/hour
+
+**Timeline:** 3-5 days for simple maps, 7-10 days for custom implementations, 2-3 weeks for complex projects.
+
 The code is clean, well-documented, and ready for immediate deployment. I can customize it with your specific regions and data, and I'm available to discuss your timeline and requirements.
 
 Thank you for your consideration.
