@@ -1,0 +1,28 @@
+{
+  "name": "interactive-regional-map",
+  "version": "1.0.0",
+  "description": "Standalone interactive map solution for any website platform",
+  "main": "index.html",
+  "scripts": {
+    "serve": "python3 -m http.server 8000",
+    "test": "echo 'Open index.html in a browser to test'"
+  },
+  "keywords": [
+    "interactive-map",
+    "svg-map",
+    "regional-map",
+    "county-map",
+    "standalone",
+    "embed",
+    "wix",
+    "wordpress",
+    "squarespace"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/tapTapCode.git"
+  }
+}
+

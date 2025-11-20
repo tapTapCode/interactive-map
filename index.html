@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Regional Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .map-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            position: relative;
+        }
+
+        .map-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .map-header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .map-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            height: auto;
+            margin: 0 auto;
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .map-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Region styles */
+        .region {
+            fill: #e0e0e0;
+            stroke: #ffffff;
+            stroke-width: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .region:hover {
+            fill: #4a90e2;
+            stroke: #2c5aa0;
+            stroke-width: 3;
+            filter: brightness(1.1);
+        }
+
+        .region.active {
+            fill: #2c5aa0;
+            stroke: #1a3d6b;
+            stroke-width: 3;
+        }
+
+        .region.selected {
+            fill: #27ae60;
+            stroke: #1e8449;
+            stroke-width: 3;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #4a90e2;
+        }
+
+        .tooltip-content {
+            font-size: 14px;
+            color: #e0e0e0;
+        }
+
+        .tooltip-content p {
+            margin: 4px 0;
+        }
+
+        /* Info panel */
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 350px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .info-panel.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .info-panel h3 {
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 8px;
+        }
+
+        .info-panel .info-item {
+            margin: 12px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-panel .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .info-panel .info-value {
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .info-panel .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .info-panel .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        /* Legend */
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #fff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .map-container {
+                padding: 15px;
+            }
+
+            .map-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .info-panel {
+                position: relative;
+                top: auto;
+                right: auto;
+                max-width: 100%;
+                margin-top: 20px;
+            }
+
+            .tooltip {
+                max-width: 250px;
+                font-size: 12px;
+            }
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <div class="map-container">
+        <div class="map-header">
+            <h1>Interactive Regional Map</h1>
+            <p>Hover over regions to see details, click to select</p>
+        </div>
+
+        <div class="map-wrapper">
+            <div class="loading" id="loading">Loading map</div>
+            <svg class="map-svg" id="mapSvg" style="display: none;" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                <!-- Map regions will be inserted here by JavaScript -->
+            </svg>
+        </div>
+
+        <div class="legend" id="legend" style="display: none;">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e0e0e0;"></div>
+                <span>Default</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4a90e2;"></div>
+                <span>Hover</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2c5aa0;"></div>
+                <span>Active</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #27ae60;"></div>
+                <span>Selected</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+    <div class="info-panel" id="infoPanel">
+        <button class="close-btn" id="closeBtn">&times;</button>
+        <div id="infoContent"></div>
+    </div>
+
+    <script>
+        // ============================================
+        // MAP DATA CONFIGURATION
+        // ============================================
+        // Easy-to-update data structure for map regions
+        // Modify this object to customize your map
+        const mapData = {
+            // Map viewBox dimensions (adjust to match your SVG)
+            viewBox: "0 0 800 600",
+            
+            // Array of regions with their data
+            regions: [
+                {
+                    id: "region1",
+                    name: "North Region",
+                    path: "M 100 100 L 300 100 L 300 250 L 100 250 Z",
+                    data: {
+                        population: "125,000",
+                        area: "2,500 sq mi",
+                        description: "The northern region features diverse landscapes and a growing economy.",
+                        services: ["Healthcare", "Education", "Transportation"],
+                        contact: "north@example.com"
+                    }
+                },
+                {
+                    id: "region2",
+                    name: "South Region",
+                    path: "M 100 250 L 300 250 L 300 400 L 100 400 Z",
+                    data: {
+                        population: "98,000",
+                        area: "1,800 sq mi",
+                        description: "Southern region known for its agricultural heritage and cultural sites.",
+                        services: ["Agriculture", "Tourism", "Manufacturing"],
+                        contact: "south@example.com"
+                    }
+                },
+                {
+                    id: "region3",
+                    name: "East Region",
+                    path: "M 300 100 L 500 100 L 500 250 L 300 250 Z",
+                    data: {
+                        population: "156,000",
+                        area: "3,200 sq mi",
+                        description: "Eastern region with strong industrial base and coastal access.",
+                        services: ["Shipping", "Technology", "Finance"],
+                        contact: "east@example.com"
+                    }
+                },
+                {
+                    id: "region4",
+                    name: "West Region",
+                    path: "M 300 250 L 500 250 L 500 400 L 300 400 Z",
+                    data: {
+                        population: "142,000",
+                        area: "2,900 sq mi",
+                        description: "Western region featuring mountain ranges and outdoor recreation.",
+                        services: ["Tourism", "Mining", "Energy"],
+                        contact: "west@example.com"
+                    }
+                },
+                {
+                    id: "region5",
+                    name: "Central Region",
+                    path: "M 200 200 L 400 200 L 400 350 L 200 350 Z",
+                    data: {
+                        population: "203,000",
+                        area: "4,100 sq mi",
+                        description: "Central hub with major transportation networks and business centers.",
+                        services: ["Logistics", "Finance", "Technology", "Healthcare"],
+                        contact: "central@example.com"
+                    }
+                }
+            ]
+        };
+
+        // ============================================
+        // MAP APPLICATION
+        // ============================================
+        class InteractiveMap {
+            constructor(data) {
+                this.data = data;
+                this.svg = document.getElementById('mapSvg');
+                this.tooltip = document.getElementById('tooltip');
+                this.infoPanel = document.getElementById('infoPanel');
+                this.infoContent = document.getElementById('infoContent');
+                this.closeBtn = document.getElementById('closeBtn');
+                this.selectedRegion = null;
+                
+                this.init();
+            }
+
+            init() {
+                // Set viewBox
+                if (this.data.viewBox) {
+                    this.svg.setAttribute('viewBox', this.data.viewBox);
+                }
+
+                // Create regions
+                this.createRegions();
+
+                // Setup event listeners
+                this.setupEventListeners();
+
+                // Hide loading, show map
+                document.getElementById('loading').style.display = 'none';
+                this.svg.style.display = 'block';
+                document.getElementById('legend').style.display = 'flex';
+            }
+
+            createRegions() {
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.setAttribute('class', 'regions-group');
+
+                this.data.regions.forEach(region => {
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('id', region.id);
+                    path.setAttribute('class', 'region');
+                    path.setAttribute('d', region.path);
+                    path.setAttribute('data-region-id', region.id);
+                    
+                    group.appendChild(path);
+                });
+
+                this.svg.appendChild(group);
+            }
+
+            setupEventListeners() {
+                // Mouse events for regions
+                this.svg.addEventListener('mouseover', (e) => {
+                    if (e.target.classList.contains('region')) {
+                        this.handleHover(e.target, e);
+                    }
+                });
+
+                this.svg.addEventListener('mouseout', (e) => {
+                    if (e.target.classList.contains('region')) {
+                        this.handleMouseOut(e.target);
+                    }
+                });
+
+                this.svg.addEventListener('mousemove', (e) => {
+                    if (e.target.classList.contains('region') && this.tooltip.classList.contains('visible')) {
+                        this.updateTooltipPosition(e);
+                    }
+                });
+
+                this.svg.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('region')) {
+                        this.handleClick(e.target);
+                    }
+                });
+
+                // Close button
+                this.closeBtn.addEventListener('click', () => {
+                    this.closeInfoPanel();
+                });
+
+                // Close on outside click
+                document.addEventListener('click', (e) => {
+                    if (!this.infoPanel.contains(e.target) && 
+                        !e.target.classList.contains('region') &&
+                        !e.target.closest('.region')) {
+                        this.closeInfoPanel();
+                    }
+                });
+            }
+
+            handleHover(element, event) {
+                const regionId = element.getAttribute('data-region-id');
+                const region = this.data.regions.find(r => r.id === regionId);
+                
+                if (!region) return;
+
+                // Add active class
+                element.classList.add('active');
+
+                // Show tooltip
+                this.showTooltip(region, event);
+            }
+
+            handleMouseOut(element) {
+                element.classList.remove('active');
+                this.hideTooltip();
+            }
+
+            handleClick(element) {
+                const regionId = element.getAttribute('data-region-id');
+                const region = this.data.regions.find(r => r.id === regionId);
+                
+                if (!region) return;
+
+                // Remove previous selection
+                if (this.selectedRegion) {
+                    const prevElement = this.svg.querySelector(`#${this.selectedRegion}`);
+                    if (prevElement) {
+                        prevElement.classList.remove('selected');
+                    }
+                }
+
+                // Set new selection
+                this.selectedRegion = regionId;
+                element.classList.add('selected');
+                element.classList.remove('active');
+
+                // Show info panel
+                this.showInfoPanel(region);
+            }
+
+            showTooltip(region, event) {
+                this.tooltip.innerHTML = `
+                    <div class="tooltip-title">${region.name}</div>
+                    <div class="tooltip-content">
+                        <p><strong>Population:</strong> ${region.data.population}</p>
+                        <p><strong>Area:</strong> ${region.data.area}</p>
+                    </div>
+                `;
+                
+                this.tooltip.classList.add('visible');
+                this.updateTooltipPosition(event);
+            }
+
+            updateTooltipPosition(event) {
+                const rect = this.svg.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                this.tooltip.style.left = `${x + 15}px`;
+                this.tooltip.style.top = `${y - 15}px`;
+            }
+
+            hideTooltip() {
+                this.tooltip.classList.remove('visible');
+            }
+
+            showInfoPanel(region) {
+                const servicesList = region.data.services
+                    .map(service => `<li>${service}</li>`)
+                    .join('');
+
+                this.infoContent.innerHTML = `
+                    <h3>${region.name}</h3>
+                    <div class="info-item">
+                        <div class="info-label">Description</div>
+                        <div class="info-value">${region.data.description}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Population</div>
+                        <div class="info-value">${region.data.population}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Area</div>
+                        <div class="info-value">${region.data.area}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Services</div>
+                        <div class="info-value">
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                ${servicesList}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Contact</div>
+                        <div class="info-value">${region.data.contact}</div>
+                    </div>
+                `;
+
+                this.infoPanel.classList.add('visible');
+            }
+
+            closeInfoPanel() {
+                this.infoPanel.classList.remove('visible');
+                
+                // Optionally clear selection
+                if (this.selectedRegion) {
+                    const element = this.svg.querySelector(`#${this.selectedRegion}`);
+                    if (element) {
+                        element.classList.remove('selected');
+                    }
+                    this.selectedRegion = null;
+                }
+            }
+        }
+
+        // ============================================
+        // INITIALIZE MAP
+        // ============================================
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                new InteractiveMap(mapData);
+            });
+        } else {
+            new InteractiveMap(mapData);
+        }
+    </script>
+</body>
+</html>
+
